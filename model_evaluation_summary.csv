@@ -1,0 +1,5 @@
+Model,RMSE,R² Score
+Random Forest,19.632101580088634,0.9966599793882519
+Linear Regression,162.02392601899376,0.7725039477652464
+Gradient Boosting,19.435423019445544,0.9967265662393466
+streamlit run /Users/Work1/Library/CloudStorage/OneDrive-FocalPointK12,Inc/Studentpattern/model_training_app.py
