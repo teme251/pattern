@@ -5,3 +5,9 @@ azure-functions
 pandas
 joblib
 scikit-learn
+streamlit
+matplotlib
+pandas
+numpy
+scikit-learn
+seaborn
