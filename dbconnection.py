@@ -1,47 +1,46 @@
-import sqlalchemy
-import pyodbc
+"""Azure SQL connection helper for the student performance prototype.
+
+Set AZURE_SQL_SERVER, AZURE_SQL_DATABASE, AZURE_SQL_USERNAME, and
+AZURE_SQL_PASSWORD in your environment. Never commit credentials.
+"""
+import os
+import urllib.parse
+
 import pandas as pd
 from sqlalchemy import create_engine, text
-import urllib
+
 
 def get_db_engine():
-    # Database credentials
-    server = 'teambitembank.database.windows.net'
-    database = 'AI-DataSupport'
-    username = 'teambadmin'
-    password = 'Team@Admin'
-    driver = '{ODBC Driver 17 for SQL Server}'
+    names = {
+        "server": "AZURE_SQL_SERVER",
+        "database": "AZURE_SQL_DATABASE",
+        "username": "AZURE_SQL_USERNAME",
+        "password": "AZURE_SQL_PASSWORD",
+    }
+    values = {key: os.environ.get(name) for key, name in names.items()}
+    missing = [names[key] for key, value in values.items() if not value]
+    if missing:
+        raise RuntimeError("Missing required environment variables: " + ", ".join(missing))
 
-    # Build the connection string
+    driver = os.environ.get("AZURE_SQL_DRIVER", "ODBC Driver 17 for SQL Server")
     params = urllib.parse.quote_plus(
-        f'DRIVER={driver};'
-        f'SERVER={server};'
-        f'DATABASE={database};'
-        f'UID={username};'
-        f'PWD={password}'
+        f"DRIVER={{{driver}}};"
+        f"SERVER={values['server']};"
+        f"DATABASE={values['database']};"
+        f"UID={values['username']};"
+        f"PWD={values['password']}"
     )
-
-    engine = create_engine(f'mssql+pyodbc:///?odbc_connect={params}')
-    return engine
+    return create_engine(f"mssql+pyodbc:///?odbc_connect={params}")
 
 
-# Function to test the connection by fetching one row
 def test_connection():
     engine = get_db_engine()
-
-    # Execute query using the text() method
     with engine.connect() as conn:
         result = conn.execute(text("SELECT count(1) FROM dbo.studentpattern_school"))
-        for row in result:
-            print(row)
-            query = "SELECT count(1) FROM [dbo].[studentpattern_school]"
-            df = pd.read_sql(query, engine)
-
-            print(df.head())
-            print(df.info())
-            print(df.describe())
+        print("Rows:", result.scalar_one())
+        df = pd.read_sql("SELECT TOP 1 * FROM dbo.studentpattern_school", conn)
+        print(df.head())
 
 
-# Call the test function
-test_connection()
-
+if __name__ == "__main__":
+    test_connection()
